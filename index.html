@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="de">
+
+<head>
+  <meta charset="utf-8">
+  <title>simple tetris game</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      margin: 0px;
+      font-family: Arial, Helvetica, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(16, 20px);
+      grid-template-rows: repeat(24, 20px);
+    }
+
+    .tile {
+      background-color: aqua;
+    }
+
+    .red {
+      background-color: red;
+    }
+
+    .green {
+      background-color: green;
+    }
+
+    .lime {
+      background-color: lime;
+    }
+
+    #controller {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+
+    }
+
+    .btnGC {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin: 0.5rem;
+      min-width: 48px;
+    }
+
+    h3 {
+      background-color: coral;
+      padding: 4px;
+    }
+
+    .seg {
+      padding: 4px;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-around;
+    }
+  </style>
+</head>
+
+<body>
+  <h3>My very simple Snake Game</h3>
+  <div id="grid" class="crid"></div>
+  <div id="controller">
+    <div class="seg"><button class="btnGC" id="flip" onclick="flip()">&ShortUpArrow;</button></div>
+    <div class="seg"><button class="btnGC" id="left" onclick="left()">&ShortLeftArrow;</button>
+      <button onclick="startGame()">new game</button>
+      <button class="btnGC" id="right" onclick="right()">&ShortRightArrow;</button></div>
+    <div class="seg"><button class="btnGC" id="down" onclick="down()">&ShortDownArrow;</button></div>
+  </div>
+</body>
+<script>
+  const grid = document.getElementById("grid");
+  let tiles = [];
+  const c = 16;//number of columns
+  const r = 24; //number of rows
+  let s = 24;
+  let I = new Object(s);
+  I = [[s - c, s, s + c, s + c + c], [s - 1, s, s + s, s + 2], [s - c, s, s + c, s + c + c]];
+
+  let rotation = 0;
+  let piece = [];
+  let selectedPiece = I;
+  let ground = [368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383];
+
+  let intervallHandler;
+  let speed = 30;
+  const shapes = ["T", "Z", "S", "O", "I", "L", "J"];
+  let shape = "T";
+
+  function drawGrid() {
+    grid.innerHTML = "";
+    tiles = [];
+    for (let i = 0; i < c * r; i++) {
+      let tile = document.createElement("div");
+      tiles[i] = tile;
+      tile.className = "tile";
+      grid.appendChild(tile);
+    }
+  }
+
+  
+  function Piece(shape, s) {
+    let p;
+    switch (shape) {
+      case "T":
+        p = [[s - 1, s, s + 1, s + c], [s - c, s, s + 1, s + c], [s - 1, s, s - c, s + 1], [s - c, s - 1, s, s + c]];
+        break;
+      case "S":
+        p = [[s + 1, s, s + c, s + c - 1], [s - c, s, s + 1, s + c+1], [s - c , s-c+1,  s - 1,s], [s - c-1, s - 1, s, s + c]];
+        break;
+      case "Z":
+        p = [[s - 1, s, s + c, s + c + 1], [s - c + 1, s, s + 1, s + c], [s - c - 1, s, s - c, s + 1], [s - c, s - 1, s, s + c - 1]];
+        break;
+
+      case "O":
+        p = [[s, s+1, s + c, s + c + 1], [s, s+1, s + c, s + c + 1], [s, s+1, s + c, s + c + 1], [s, s+1, s + c, s + c + 1]];
+        break;
+      case "I":
+        p = [[s, s-c, s + c, s + c + c], [s, s-1, s +1, s + 1 + 1], [s, s-c, s + c, s + c + c], [s, s-1, s +1, s + 1 + 1]];
+        break;
+      case "L":
+        p = [[s-c, s, s + c, s + c + 1], [s-c+1, s-1, s, s+ 1], [s-c-1, s-c, s, s + c], [s-1, s, s + 1, s + c +-1]];
+        break;
+      case "J":
+        p = [[s-c, s, s + c-1, s + c], [s-1, s, s + 1, s + c + 1], [s-c, s-c+1, s , s + c], [s-c-1, s-1, s, s+ 1]];
+        break;
+    }
+    return p[rotation % 4];
+  }
+
+  function movePiece() {
+    s = s + c;
+    piece = Piece(shape,s);
+  }
+  function drawPiece(s) {
+    for (let i = 0; i < 4; i++) {
+      let t = piece[i];
+      tiles[t].className = "red";
+    }
+  }
+
+  function drawGround() {
+    for (let i = 0; i < ground.length; i++) {
+      let t = ground[i];
+      tiles[t].className = "lime";
+    }
+  }
+
+  function groundTouch() {
+    console.log(piece);
+    if (piece.some(val => ground.includes(val))) {
+
+      return true;
+    } else {
+      return false;
+    }
+
+  }
+
+
+  function loop() {
+    drawGrid();
+    drawGround();
+    //selectPiece();
+    movePiece();//step - left - right - flip - drop - 
+    if (groundTouch() == false) {
+      drawPiece();
+    } else {
+      ground = ground.concat(Piece(shape,s - c));//add piece to the ground
+      s = 24;//reset s
+      shape = "S";//T S Z L J I O
+      //shape = shapes[Math.floor(Math.random()*7)];//select new shape randomly
+      drawGround();
+    }
+
+
+  }
+
+  function startGame() {
+    clearInterval(intervallHandler);
+    intervallHandler = setInterval(loop, 10000 / speed);
+  }
+
+  function stopGame() {
+    clearInterval(intervallHandler);
+    alert("Game over");
+  }
+
+  document.addEventListener("keyup", (event) => {
+    switch (event.key) {
+      case "ArrowLeft": left();
+        break;
+      case "ArrowRight": right();
+        break;
+      case "ArrowUp": flip();
+        break;
+      case "ArrowDown": down();
+        break;
+    }
+  })
+
+  const flip = () => { rotation = rotation + 1 };
+  const down = () => { };
+  const left = () => { s = s - 1 };
+  const right = () => { s = s + 1 };
+
+  startGame();
+</script>
+
+</html>
